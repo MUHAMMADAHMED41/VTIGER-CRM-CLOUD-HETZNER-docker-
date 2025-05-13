@@ -1,0 +1,21 @@
+version: '3.7'
+services:
+  vtiger:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${HOST_PORT:-80}:80"
+    environment:
+      - MYSQL_USER=${MYSQL_USER:-admin}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-admin}
+    volumes:
+      - vtiger_source_volume:/var/www/html
+      - vtiger_mysql_data_volume:/var/lib/mysql
+    restart: always
+
+volumes:
+  vtiger_source_volume:
+    name: vtiger_source_volume
+  vtiger_mysql_data_volume:
+    name: vtiger_mysql_data_volume

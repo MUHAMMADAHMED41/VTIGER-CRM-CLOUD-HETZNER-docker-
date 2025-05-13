@@ -1,0 +1,18 @@
+vtiger-self-hosted/
+├── Dockerfile
+├── docker-compose.yml
+├── .env.example
+├── nginx/
+│   └── vtiger.conf
+├── scripts/
+│   └── setup.sh
+├── README.md
+└── errors.txt
+
+Dockerfile: Customizes the Vtiger Docker image for additional configurations.
+docker-compose.yml: Defines the Vtiger service with persistent volumes.
+.env.example: Template for environment variables (e.g., MySQL credentials, port).
+nginx/vtiger.conf: Nginx configuration for reverse proxy and HTTPS.
+scripts/setup.sh: Automation script for setup on Hetzner Cloud.
+README.md: Detailed project documentation and setup guide.
+errors.txt: List of expected errors during installation with solutions.

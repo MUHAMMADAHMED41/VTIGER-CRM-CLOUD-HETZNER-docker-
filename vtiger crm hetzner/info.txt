@@ -1,0 +1,115 @@
+This guide complements the README.md and provides detailed instructions for deploying the project on Hetzner Cloud.
+
+Step 1: Provision Hetzner Cloud Server
+Log in to Hetzner Cloud Console.
+Create a server:
+Location: Nuremberg, Falkenstein, or Helsinki.
+Image: Debian 12.
+Type: CX22 (4 GB RAM, 80 GB disk) or higher.
+Networking: Enable Public IPv4.
+SSH Key: Add your SSH key (ssh-keygen -t rsa if needed).
+Note the server’s public IP (<server_ip>, e.g., 5.78.131.212).
+Step 2: Configure DNS
+In your DNS provider (e.g., Cloudflare):
+Add an A record:
+text
+
+Copy
+Type: A
+Host: vtiger
+Value: <server_ip>
+TTL: 300
+Verify:
+bash
+
+Copy
+dig vtiger.dialerportal.com
+Ensure it resolves to <server_ip>.
+Step 3: Clone and Set Up the Project
+SSH into the server:
+bash
+
+Copy
+ssh root@<server_ip>
+Clone the repository (replace with your GitHub URL):
+bash
+
+Copy
+git clone https://github.com/yourusername/vtiger-self-hosted.git
+cd vtiger-self-hosted
+Configure environment:
+bash
+
+Copy
+cp .env.example .env
+nano .env
+Update MYSQL_PASSWORD and HOST_PORT (e.g., 8080).
+Make the setup script executable:
+bash
+
+Copy
+chmod +x scripts/setup.sh
+Step 4: Run the Setup Script
+Edit scripts/setup.sh to set your email for Certbot:
+bash
+
+Copy
+nano scripts/setup.sh
+Replace your_email@example.com with your email.
+Run the script:
+bash
+
+Copy
+./scripts/setup.sh
+Installs Docker, Docker Compose, Nginx, Certbot, and UFW.
+Starts Vtiger containers.
+Configures Nginx and SSL.
+Sets up backups.
+Step 5: Configure Hetzner Firewall
+In Hetzner Cloud Console:
+Go to Firewalls > Create Firewall.
+Add rules:
+TCP 22: SSH.
+TCP 80: HTTP (for Certbot).
+TCP 443: HTTPS.
+Apply to your server.
+Step 6: Complete Vtiger Setup
+Open https://vtiger.dialerportal.com in your browser.
+Follow the setup wizard:
+System Check: Docker image handles prerequisites.
+Database: Uses .env credentials.
+Admin User: Set username, password, email.
+Settings: Configure timezone, currency.
+Log in and test (e.g., create a lead).
+Step 7: Post-Installation
+Secure SSH:
+bash
+
+Copy
+nano /etc/ssh/sshd_config
+Change Port 22 to 2222.
+Restart:
+bash
+
+Copy
+systemctl restart sshd
+Update Hetzner firewall for port 2222.
+Verify Backups:
+bash
+
+Copy
+ls /var/backups/vtiger
+Monitor:
+bash
+
+Copy
+docker logs vtiger-vtiger-1
+tail -f /var/log/nginx/error.log
+Step 8: Prepare for Vicidial Integration
+Deploy Vicidial on a separate Hetzner server (e.g., CX22).
+Install ViciBox or Vicidial manually (see Vicidial documentation).
+Configure Vtiger’s Phone Calls module:
+Settings > Phone Configuration > Add Gateway (VICIdial).
+Set Vicidial server IP and URLs.
+Set Vicidial webforms to point to Vtiger’s PBX Manager.
+Update Hetzner firewall for Vicidial ports (5060 TCP/UDP, 10000-20000 UDP).

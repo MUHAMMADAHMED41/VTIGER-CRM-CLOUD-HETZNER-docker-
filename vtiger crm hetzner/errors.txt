@@ -1,0 +1,118 @@
+# Expected Errors and Solutions for Vtiger Self-Hosting on Hetzner Cloud
+
+1. **AppArmor Error: "apparmor_parser: executable file not found"**
+   - Cause: AppArmor is enabled but the `apparmor` package is missing.
+   - Solution:
+     ```bash
+     apt install apparmor -y
+     systemctl restart docker
+     cd /root/vtiger
+     docker-compose down
+     docker-compose up -d
+     ```
+
+2. **Docker Compose Error: "no configuration file provided: not found"**
+   - Cause: Running `docker-compose up` outside the project directory or missing `docker-compose.yml`.
+   - Solution:
+     ```bash
+     cd /root/vtiger
+     ls # Verify docker-compose.yml exists
+     docker-compose up -d
+     ```
+   - If Docker Compose is missing:
+     ```bash
+     curl -L "https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+     chmod +x /usr/local/bin/docker-compose
+     ```
+
+3. **Certbot Error: "Timeout during connect (likely firewall problem)"**
+   - Cause: Port 80 is blocked by Hetzner firewall or UFW.
+   - Solution:
+     - Check Hetzner Cloud Firewall: Ensure port 80 is allowed.
+     - Configure UFW:
+       ```bash
+       ufw allow 80
+       ufw allow 443
+       ufw enable
+       ```
+     - Re-run Certbot:
+       ```bash
+       certbot --nginx -d vtiger.dialerportal.com
+       ```
+     - Alternative (manual challenge):
+       ```bash
+       mkdir -p /var/www/html/.well-known/acme-challenge
+       chown -R www-data:www-data /var/www/html
+       certbot certonly --webroot -w /var/www/html -d vtiger.dialerportal.com
+       ```
+
+4. **Nginx Error: "nginx: [emerg] bind() to 0.0.0.0:80 failed (98: Address already in use)"**
+   - Cause: Another service (e.g., Apache) is using port 80.
+   - Solution:
+     ```bash
+     netstat -tulnp | grep :80
+     ```
+     - Stop conflicting service (e.g., Apache):
+       ```bash
+       systemctl stop apache2
+       systemctl disable apache2
+       ```
+     - Restart Nginx:
+       ```bash
+       systemctl restart nginx
+       ```
+
+5. **Vtiger Wizard Fails: "Database connection error"**
+   - Cause: Incorrect MySQL credentials in `.env`.
+   - Solution:
+     ```bash
+     nano /root/vtiger/.env
+     ```
+     - Verify `MYSQL_USER` and `MYSQL_PASSWORD`.
+     - Restart containers:
+       ```bash
+       cd /root/vtiger
+       docker-compose down
+       docker-compose up -d
+       ```
+
+6. **Connectivity Error: "curl: (28) Failed to connect to vtiger.dialerportal.com port 443"**
+   - Cause: DNS misconfiguration, firewall blocking port 443, or Nginx not running.
+   - Solution:
+     - Verify DNS:
+       ```bash
+       dig vtiger.dialerportal.com
+       ```
+     - Check Hetzner firewall: Allow ports 80, 443.
+     - Check Nginx:
+       ```bash
+       systemctl status nginx
+       nginx -t
+       systemctl restart nginx
+       ```
+     - Test:
+       ```bash
+       curl https://vtiger.dialerportal.com
+       ```
+
+7. **Container Fails to Start: "Permission denied on volume"**
+   - Cause: Incorrect permissions on Docker volumes.
+   - Solution:
+     ```bash
+     docker volume inspect vtiger_source_volume
+     docker volume inspect vtiger_mysql_data_volume
+     chown -R www-data:www-data /var/lib/docker/volumes/vtiger_source_volume/_data
+     chown -R www-data:www-data /var/lib/docker/volumes/vtiger_mysql_data_volume/_data
+     cd /root/vtiger
+     docker-compose up -d
+     ```
+
+8. **Slow DNS Propagation**:
+   - Cause: DNS changes take time to propagate.
+   - Solution:
+     - Wait 5-24 hours or reduce TTL in DNS provider.
+     - Test locally:
+       ```bash
+       echo "<server_ip> vtiger.dialerportal.com" >> /etc/hosts
+       curl https://vtiger.dialerportal.com
+       ```

@@ -1,0 +1,13 @@
+FROM vtigercrm/vtigercrm-8.3.0:latest
+
+# Install additional tools
+RUN apt-get update && apt-get install -y \
+    curl \
+    nano \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Ensure permissions
+RUN chown -R www-data:www-data /var/www/html /var/lib/mysql
